@@ -4,7 +4,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pathlib import Path
-
+import imageio
+from skimage.transform import resize
 
 def do_with_member(member):
     print(member)
@@ -43,8 +44,45 @@ for array,date,title in h5_iterator(h5_name, fps*nSeconds):
     snapshots.append(array)
     datetimes.append(date)
     titles.append(title)
+SHAPE = array.shape
+N = len(snapshots)
+background = imageio.imread("coords2.jpg")
+background = resize(background, SHAPE)
+background = np.mean(background,axis=2)
+print(np.min(background),np.max(background))
+print("SHAPE", background.shape)
+plt.imshow((255*background+array)/2,cmap="gray")
+plt.show()
+'''AVG = np.zeros(SHAPE)
+diff = np.zeros(SHAPE)
+for a,b in zip(snapshots[0:-2],snapshots[1:-1]):
+    diff += a-b
+    AVG += a
+diff /= N-1
+AVG /= N-1
+diff_max = np.max(diff)/2
 
+diff[diff<diff_max] = 0
+
+AVG_max = np.max(AVG)/2
+
+#AVG[AVG<AVG_max] = 0.1
+#AVG[AVG>AVG_max] = 1
+
+plt.imshow(AVG,cmap="gray")
+plt.show()
 shape = (1124,906)
+for i, a in enumerate(snapshots):
+    #array = np.divide(a,AVG)
+
+    #array = np.minimum(a,255)
+
+    a[AVG<AVG_max] = a[AVG<AVG_max] + 255-AVG[AVG<AVG_max]
+    a = np.minimum(a,255)
+    snapshots[i] = a'''
+plt.imshow(snapshots[40])
+
+plt.title("Radar composite precipitation field")
 # First set up the figure, the axis, and the plot element we want to animate
 fig,ax = plt.subplots(1,1)
 
