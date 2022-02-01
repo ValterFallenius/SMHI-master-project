@@ -1,4 +1,4 @@
-from pyproj import CRS, Proj
+from pyproj import Proj
 from pyproj import transformer
 
 stockholm = (370,670)
@@ -25,6 +25,6 @@ where_dict = {
     'ysize': 881
     }
 
-crs = CRS.from_proj4('+proj=stere +ellps=bessel +lat_0=90 +lon_0=14 +lat_ts=60 +datum=WGS84')
-outProj =pyproj.Proj(init='epsg:4326')
+crs = Proj('+proj=stere +ellps=bessel +lat_0=90 +lon_0=14 +lat_ts=60 +datum=WGS84')
+outProj = Proj(init='epsg:4326')
 trans = transformer.Transformer.from_crs(crs)

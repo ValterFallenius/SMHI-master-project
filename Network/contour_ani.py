@@ -22,7 +22,8 @@ def h5_iterator(h5_file,maxN = 100):
     "10":"October", "11":"November", "12":"December"}
     with h5.File(h5_file,"r") as f:
         for i,(name, obj) in enumerate(f.items()):
-            if i>=maxN: break
+            if maxN:
+                if i>=maxN: break
             type, date = name.split("-")
             y, m, d, t = date.split("_")
             title = f"Year: {y} month: {months[m]} day: {d} time: {t}"
