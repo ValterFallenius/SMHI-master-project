@@ -36,11 +36,11 @@ def h5_iterator(h5_file,maxN = 100):
 
 fps = 30
 nSeconds = 30
-h5_name = "ppi_combined.h5"
+h5_name = "pn157_combined.h5"
 snapshots = []
 datetimes = []
 titles = []
-for array,date,title in h5_iterator(h5_name, fps*nSeconds):
+for array,date,title in h5_iterator(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Network\\data\\{h5_name}", fps*nSeconds):
     snapshots.append(array)
     datetimes.append(date)
     titles.append(title)
@@ -56,7 +56,7 @@ mycmap = transparent_cmap(plt.cm.Reds)
 
 
 # Import image and get x and y extents
-I = imageio.imread('blank2.png')
+I = imageio.imread('C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Network\\plots\\blank2.png')
 I = resize(I, SHAPE)
 p = np.asarray(I).astype('float')
 

@@ -47,15 +47,15 @@ def actual_h5(file):
 
 file_name = "comp_ppi_swe2km_pn157_20220121T180000Z_0x40000000001.h5"
 file_name = "comp_pcappi_nrd2km_pn152_20220121T180000Z_0x1.h5"
-file_name = "pn152_combined.h5"
+file_name = "combination_all_pn157.h5.h5"
 
-file_name = "comp_ppi_swe2km_pn157_20210103T104500Z_0x40000000001.h5"
+file_name = "combination_all_pn157.h5"
 
 #with h5.File(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Data\\18\\00\\{file_name}","r") as f:
-with h5.File(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Data\\data\\pn157\\{file_name}","r") as f:
+with h5.File(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Network\\{file_name}","r") as f:
     coords=[]
 
-    rec_h5(f)
+    #rec_h5(f)
     actual_h5(f)
     fig.suptitle(file_name)
     plt.show()

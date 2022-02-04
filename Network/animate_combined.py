@@ -39,7 +39,7 @@ h5_name = "ppi_combined.h5"
 snapshots = []
 datetimes = []
 titles = []
-for array,date,title in h5_iterator(h5_name, fps*nSeconds):
+for array,date,title in h5_iterator(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Network\\data\\{h5_name}", fps*nSeconds):
     print(array,date,title)
     snapshots.append(array)
     datetimes.append(date)

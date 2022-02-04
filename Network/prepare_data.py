@@ -7,12 +7,18 @@ from pathlib import Path
 import os
 from datetime import datetime, timedelta
 
+
 #from grid_with_projection import GridWithProjection
 def h5_writer(directory,data,dates):
     with h5.File(f'network_data.h5', 'w') as target:
         for date in dates:
             target.create_dataset(target_name,data = array,compression="gzip")
 
+def do_with_items(name):
+
+
+
+    return name
 def date_assertion(dates,delta = 5):
     for date1,date2 in zip(dates[0:-2],dates[1:-1]):
         list1 = date1.split("_")
@@ -41,11 +47,17 @@ def h5_iterator(h5_file,maxN = 100):
     "07":"July", "08":"August", "09":"September",
     "10":"October", "11":"November", "12":"December"}
     with h5.File(h5_file,"r") as f:
-        for i,(name, obj) in enumerate(f.items()):
+
+        keys = list(f["data/pn157"].keys())
+        for i,name in enumerate(keys):
+
+            obj = f["data/pn157/"+name]
+
+            #print(name, obj)
             if maxN:
                 if i>=maxN: break
             #print(name)
-            type, date = name.split("-")
+            typ, date = name.split("-")
             y, m, d, t = date.split("_")
             #title = f"Year: {y} month: {months[m]} day: {d} time: {t}"
             array = 255-np.array(obj) #flip array
@@ -80,8 +92,8 @@ def temporal_concatenation(data,dates,concat = 9, overlap = 0):
     concats = []
     conc_dates=[]
     for i in range(0,n-concat,concat-overlap):
-        if i%1000==0:
-            print(f"\nTemporal concatenated samples: ",i)
+        if (i+1)%1000==0:
+            print(f"\nTemporal concatenated samples: ",i+1)
         temp_array = data[i:i+concat,:,:]
         temp_dates = dates[i:i+concat]
         try:
@@ -169,7 +181,7 @@ def generate_y(data,dates,span = 10):
 def partition(data,y,partition = 0.8 ):
     data = np.expand_dims(data, axis=-1)
     y= np.expand_dims(y, axis=-1)
-    print(data.shape)
+    #print(data.shape)
     N = data.shape[0]
     # Split into train and validation sets using indexing to optimize memory.
     indexes = np.arange(N)
@@ -185,7 +197,7 @@ def partition(data,y,partition = 0.8 ):
 
 if __name__=="__main__":
 
-    data = load_data("data/pn157_combined.h5",N =500)
+    data = load_data("combination_all_pn157.h5",N =None)
 
     mean_time = []
     for i,array in enumerate(data):
