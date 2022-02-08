@@ -19,11 +19,21 @@ def h5_writer(directory,data,dates):
             target.create_dataset(target_name,data = array,compression="gzip")
 
 def do_with_items(name):
-
-
-
     return name
-def date_assertion(dates,delta = 5):
+
+
+
+def space_to_depth(x, block_size):
+    x = np.asarray(x)
+    batch, height, width, depth = x.shape
+    reduced_height = height // block_size
+    reduced_width = width // block_size
+    y = x.reshape(batch, reduced_height, block_size,
+                         reduced_width, block_size, depth)
+    z = np.swapaxes(y, 2, 3).reshape(batch, reduced_height, reduced_width, -1)
+    return z
+
+def date_assertion(dates,expected_delta = 5):
     for date1,date2 in zip(dates[0:-2],dates[1:-1]):
         list1 = date1.split("_")
         list1 = list1[0:3] + list1[3].split(":")
@@ -40,8 +50,8 @@ def date_assertion(dates,delta = 5):
 
         #print(datetime1)
         #print(datetime2)
-        #print("DELTA", minutes)
-        assert int(minutes) == 5
+        #print("DELTA ", minutes, "delta ", expected_delta)
+        assert int(minutes) == expected_delta
 
 def h5_iterator(h5_file,maxN = 100,spaced = 1):
     """Iterates through the desired datafile and returns index, array and datetime"""
@@ -54,8 +64,10 @@ def h5_iterator(h5_file,maxN = 100,spaced = 1):
 
         keys = list(f["data/pn157"].keys())
         for i,name in enumerate(keys):
+
             if i%spaced!=0:
                 continue
+            j = i//spaced
             obj = f["data/pn157/"+name]
 
             #print(name, obj)
@@ -69,7 +81,7 @@ def h5_iterator(h5_file,maxN = 100,spaced = 1):
 
 
             #print(array.shape)
-            yield i, array, date
+            yield j, array, date
 
 def down_sampler(array, rate = 2):
     """Spatial downsampling with vertical and horizontal downsampling rate = rate."""
@@ -88,11 +100,12 @@ def down_sampler(array, rate = 2):
                 pass
     return array_new
 
+
 def temporal_concatenation(data,dates,concat = 7, overlap = 0,spaced = 3):
     """Takes the spatial 2D arrays and concatenates temporal aspect to 3D-vector (T-120min, T-105min, ..., T-0min)
     concat = number of frames to encode in temporal dimension
     overlap = how many of the spatial arrays are allowed to overlap in another datasample"""
-    n,x_size,y_size = data.shape
+    n,x_size,y_size,channels = data.shape
     #concecutive time
     concats = []
     conc_dates=[]
@@ -102,11 +115,10 @@ def temporal_concatenation(data,dates,concat = 7, overlap = 0,spaced = 3):
         temp_array = data[i:i+concat,:,:]
         temp_dates = dates[i:i+concat]
         try:
-            date_assertion(temp_dates,delta = 5*spaced)
-
+            date_assertion(temp_dates,expected_delta = 5*spaced)
         except AssertionError:
             print(f"Warning, dates are not alligned! Skipping: {i}:{i+concat}")
-            return None
+
         concats.append(temp_array)
         conc_dates.append(temp_dates)
     concats = np.array(concats)
@@ -114,7 +126,7 @@ def temporal_concatenation(data,dates,concat = 7, overlap = 0,spaced = 3):
     return concats,conc_dates
 
 
-def load_data(h5_path,N = 3000, concat = 7,  square = (0,480,0,480), downsampling_rate = 2, overlap = 0, spaced=3):
+def load_data(h5_path,N = 3000, concat = 7,  square = (0,456,0,456), downsampling_rate = 2, overlap = 0, spaced=3,downsample = False, spacedepth =False,box=2):
     #15 minutes between datapoints is default --> spaced = 3
     snapshots = []
     dates = []
@@ -134,19 +146,34 @@ def load_data(h5_path,N = 3000, concat = 7,  square = (0,480,0,480), downsamplin
     print(f"\nArea of interest by index: xmin = {x0}, xmax = {x1}, ymin = {y0}, ymax = {y1}")
     x_lim = slice(x0,x1)
     y_lim = slice(y0,y1)
-    print("DOWNRATE ", downsampling_rate)
-    for i,array in enumerate(data):
-        if (i+1)%1000==0:
-            print("Downsampling samples: ",i+1)
-        section = array[x_lim,y_lim]
-        down = down_sampler(section,downsampling_rate)
-        downsampled.append(down)
-    print("Done downsampling! \n")
-    data_downsampled = np.array(downsampled)
 
-    print("\nDatatype downsampled: ", data_downsampled.dtype)
-    print("\nDownsampled data shape: ",data_downsampled.shape)
-    temp_concat, new_dates = temporal_concatenation(data_downsampled,dates,concat = concat, overlap = overlap, spaced = spaced)
+    data =  data[:,x_lim,y_lim]
+    print(f"\nSliced data to dimensions {data.shape}")
+    if downsample == True:
+        downsampled = []
+        print("\nDownsampling with rate: ", downsampling_rate)
+        for i,array in enumerate(data):
+            if (i+1)%1000==0:
+                print("Downsampling samples: ",i+1)
+
+            down = down_sampler(array,downsampling_rate)
+            downsampled.append(down)
+        print("\nDone downsampling!")
+        data = np.array(downsampled)
+
+        print("\nDatatype downsampled: ", data.dtype)
+        print("\nDownsampled data shape: ",data.shape)
+    if spacedepth==True:
+        print(f"\nStarting space-to-depth transform on data")
+        if len(data.shape)<4:
+            data = np.expand_dims(data, axis=3)
+            print(f"\nAdding channel dimension to data, new shape: {data.shape}")
+        data = space_to_depth(data,box)
+
+        print(f"\nSpace-to-depth done! New dimensions are: {data.shape}")
+
+
+    temp_concat, new_dates = temporal_concatenation(data,dates,concat = concat, overlap = overlap, spaced = spaced)
     print("Done concatenating! \n")
     return temp_concat, new_dates
 def y_nextframe(data,dates):
@@ -207,7 +234,7 @@ def partition(data,y,partition = 0.8 ):
 
 if __name__=="__main__":
 
-    data,dates  = load_data("combination_all_pn157.h5",N =500)
+    data,dates  = load_data("combination_all_pn157.h5",N =500,downsample=True,spacedepth=True)
 
     mean_time = []
     for i,array in enumerate(data):
