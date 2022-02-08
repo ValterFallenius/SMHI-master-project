@@ -6,25 +6,28 @@ import matplotlib.animation as animation
 from pathlib import Path
 import os
 import time as TT
-already_added = []
+
+_already_added = []
+
 def do_with_items(name,object):
-    global already_added
-    already_added.append(name)
+    #name = file name in the new hdf5 "", object discarded for now (this is the array)
+    global _already_added
+    _already_added.append(name)
 
 def combine_h5(files_directory,combined_directory,name,maxN=100):
-    global already_added
-    with h5.File(f'combi.h5', 'r') as check:
+    global _already_added
+    with h5.File(f'combi.h5', 'r') as check: # checks if the process for combining the files already has initiated but for some reason terminated prematurely
         check.visititems(do_with_items)
-        print("number before: ", len(already_added))
-        print(already_added)
+        print("number before: ", len(_already_added))
+        print(_already_added)
     with h5.File(f'combi.h5', 'a') as target:
 
         arrays = []
-        while True:
+        while True: #the script continues forever to allow for continuous transmission, otherwise remove.
 
-            pathlist = list(Path(files_directory).glob('**/*.h5'))
+            pathlist = list(Path(files_directory).glob('**/*.h5')) #lists all .h5 files in files_directory
             TT.sleep(5)
-            if len(pathlist)==0:
+            if len(pathlist)==0: #asks user if you want to break when pathlist is emptied of all files (removed)
                 asked=input("continue?")
                 if asked=="no":
                     break
@@ -47,18 +50,18 @@ def combine_h5(files_directory,combined_directory,name,maxN=100):
                     print(name)
                     array = np.array(f[name])
 
-                    if target_name in already_added:
+                    if target_name in _already_added:
                         print("already added")
 
                     else:
                         print(target_name)
                         target.create_dataset(target_name,data = array,compression="gzip")
-                        already_added.append(target_name)
-                os.remove(path)
+                        _already_added.append(target_name)
+                os.remove(path) #REMOVES FILES
 
 if __name__ == "__main__":
 
-    NAME = "dataset1/data1/quality1/data"
+    NAME = "dataset1/data1/quality1/data" #key for wanted data
     files_directory = "data/pn157/pn157"
     combined_directory = "/data"
     combine_h5(files_directory,combined_directory,NAME,None)

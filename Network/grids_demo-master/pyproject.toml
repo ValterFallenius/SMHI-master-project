@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "grids"
+version = "0.1.5"
+description = "Some routines to work with 2D grids and projections."
+authors = ["Paulo V C Medeiros <paulo.medeiros@smhi.se>"]
+license = "MIT"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+attrs = "^21.4.0"
+numpy = "^1.22.1"
+pyproj = "^3.3.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+isort = "^5.10.1"
+pandas = "^1.4.0"
+pytest = "^6.2.5"
+
+[tool.black]
+    line-length = 90
+
+[tool.isort]
+    profile = "black"
+    line_length = 90

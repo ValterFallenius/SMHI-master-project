@@ -7,6 +7,10 @@ from pathlib import Path
 import os
 from datetime import datetime, timedelta
 
+'''
+Output: 3D tensor of shape (N,128,128,240+46) + temporal dimension:
+
+'''
 
 #from grid_with_projection import GridWithProjection
 def h5_writer(directory,data,dates):
@@ -39,7 +43,7 @@ def date_assertion(dates,delta = 5):
         #print("DELTA", minutes)
         assert int(minutes) == 5
 
-def h5_iterator(h5_file,maxN = 100):
+def h5_iterator(h5_file,maxN = 100,spaced = 1):
     """Iterates through the desired datafile and returns index, array and datetime"""
 
     months = {"01":"January", "02":"February", "03":"March",
@@ -50,12 +54,13 @@ def h5_iterator(h5_file,maxN = 100):
 
         keys = list(f["data/pn157"].keys())
         for i,name in enumerate(keys):
-
+            if i%spaced!=0:
+                continue
             obj = f["data/pn157/"+name]
 
             #print(name, obj)
             if maxN:
-                if i>=maxN: break
+                if i//spaced>=maxN: break
             #print(name)
             typ, date = name.split("-")
             y, m, d, t = date.split("_")
@@ -83,7 +88,7 @@ def down_sampler(array, rate = 2):
                 pass
     return array_new
 
-def temporal_concatenation(data,dates,concat = 9, overlap = 0):
+def temporal_concatenation(data,dates,concat = 7, overlap = 0,spaced = 3):
     """Takes the spatial 2D arrays and concatenates temporal aspect to 3D-vector (T-120min, T-105min, ..., T-0min)
     concat = number of frames to encode in temporal dimension
     overlap = how many of the spatial arrays are allowed to overlap in another datasample"""
@@ -97,7 +102,8 @@ def temporal_concatenation(data,dates,concat = 9, overlap = 0):
         temp_array = data[i:i+concat,:,:]
         temp_dates = dates[i:i+concat]
         try:
-            date_assertion(temp_dates)
+            date_assertion(temp_dates,delta = 5*spaced)
+
         except AssertionError:
             print(f"Warning, dates are not alligned! Skipping: {i}:{i+concat}")
             return None
@@ -108,10 +114,11 @@ def temporal_concatenation(data,dates,concat = 9, overlap = 0):
     return concats,conc_dates
 
 
-def load_data(h5_path,N = 3000, concat = 13,  square = (0,480,0,480), downsampling_rate = 2, overlap = 0):
+def load_data(h5_path,N = 3000, concat = 7,  square = (0,480,0,480), downsampling_rate = 2, overlap = 0, spaced=3):
+    #15 minutes between datapoints is default --> spaced = 3
     snapshots = []
     dates = []
-    for i, array,date in h5_iterator(h5_path, N):
+    for i, array,date in h5_iterator(h5_path, N,spaced):
         if (i+1)%1000==0:
             print("Loaded samples: ",i+1)
         snapshots.append(array)
@@ -139,7 +146,7 @@ def load_data(h5_path,N = 3000, concat = 13,  square = (0,480,0,480), downsampli
 
     print("\nDatatype downsampled: ", data_downsampled.dtype)
     print("\nDownsampled data shape: ",data_downsampled.shape)
-    temp_concat, new_dates = temporal_concatenation(data_downsampled,dates,concat = concat, overlap = overlap)
+    temp_concat, new_dates = temporal_concatenation(data_downsampled,dates,concat = concat, overlap = overlap, spaced = spaced)
     print("Done concatenating! \n")
     return temp_concat, new_dates
 def y_nextframe(data,dates):
@@ -201,7 +208,7 @@ def partition(data,y,partition = 0.8 ):
 if __name__=="__main__":
 
     data,dates  = load_data("combination_all_pn157.h5",N =500)
-    y_nextframe(data,dates )
+
     mean_time = []
     for i,array in enumerate(data):
         mean_time.append(np.mean(array[0,:,:]))

@@ -110,4 +110,30 @@ class GridWithProjection:
         return self.xy2ij(x=x, y=y)
 
 if __name__=="__main__":
-    grid =
+    where_dict = {
+        'LL_lat': 53.987947379235436,
+        'LL_lon': 9.25569438102197,
+        'LR_lat': 53.706519377463586,
+        'LR_lon': 22.761914608556413,
+        'UL_lat': 69.80759428237813,
+        'UL_lon': 5.323837778285936,
+        'UR_lat': 69.2640415703203,
+        'UR_lon': 29.82199602636603,
+        'projdef': b'+proj=stere +ellps=bessel +lat_0=90 +lon_0=14 +lat_ts=60 +datum=WGS84',
+        'xscale': 2000.0,
+        'xsize': 458,
+        'yscale': 2000.0,
+        'ysize': 881
+        }
+    grid =GridWithProjection("+proj=stere a=6377397.155 rf=299.1528128 +lat_0=90 +lon_0=14 +lat_ts=60 +datum=WGS84",
+        (9.25569438102197,53.987947379235436),
+        (5.323837778285936,69.80759428237813),
+        (22.761914608556413,53.706519377463586),
+        (29.82199602636603,69.2640415703203,),
+        458,
+        881,
+        2000,
+        2000)
+    stockholm = (370,670)
+    tru_stockholm = (59.3293, 18.0686)
+    print(grid.lonlat2ij(*tru_stockholm))

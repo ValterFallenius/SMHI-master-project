@@ -37,7 +37,17 @@ def rec_h5(root, k=None):
 def do_with_member(member):
     print(member)
 
+means = []
+
 def do_with_items(name,object):
+    global means
+
+    I = np.array(object)
+    print(I.shape)
+    if I.shape[0]<=1: return None
+    print(I.shape)
+    plt.imshow(I)
+    plt.show()
     print(name,object)
 
 
@@ -51,7 +61,7 @@ file_name = "combination_all_pn157.h5"
 with h5.File(f"C:\\Users\\valte\\Desktop\\Teoretisk Fysik\\SMHI master\\Network\\{file_name}","r") as f:
 
 
-    #rec_h5(f)
-    actual_h5(f)
+    rec_h5(f)
+    #actual_h5(f)
     #fig.suptitle(file_name)
     #plt.show()
